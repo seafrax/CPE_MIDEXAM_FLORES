@@ -1,0 +1,117 @@
+---
+- name: Update YUM cache
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install required packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - httpd
+    - php
+    - mariadb-server
+    - gcc
+    - prometheus
+    - openssl
+    - openssl-devel
+    - unzip
+    - wget
+
+- name: Import Grafana GPG key
+  rpm_key:
+    key: https://packages.grafana.com/gpg.key
+    state: present
+
+- name: Add Grafana YUM repository
+  yum_repository:
+    name: grafana
+    description: Grafana Stable Repository
+    baseurl: https://packages.grafana.com/oss/rpm
+    gpgcheck: 1
+    gpgkey: https://packages.grafana.com/gpg.key
+    enabled: 1
+
+- name: Install Grafana package
+  yum:
+    name: grafana
+    state: present
+
+- name: Start and enable Grafana service
+  systemd:
+    name: grafana-server
+    enabled: yes
+    state: started
+
+- name: Update YUM packages cache
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install Java OpenJDK (required by Elasticsearch)
+  yum:
+    name: java-11-openjdk
+    state: present
+
+- name: Add Elasticsearch repository key
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  become: yes
+
+- name: Add Elasticsearch YUM repository
+  yum_repository:
+    name: elasticsearch
+    description: Elastic Stable Repository
+    baseurl: https://artifacts.elastic.co/packages/7.x/yum
+    gpgcheck: 1
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    enabled: 1
+
+- name: Install Elasticsearch package
+  yum:
+    name: elasticsearch
+    state: present
+  become: yes
+
+- name: Install Logstash package
+  yum:
+    name: logstash
+    state: present
+  become: yes
+
+- name: Install Kibana package
+  yum:
+    name: kibana
+    state: present
+  become: yes
+
+- name: Import InfluxData GPG key
+  shell: curl -sL https://repos.influxdata.com/influxdb.key | sudo gpg --import -
+  become: yes
+
+- name: Add InfluxDB YUM repository
+  yum_repository:
+    name: influxdb
+    description: Influxdb Stable Repository
+    baseurl: https://repos.influxdata.com/rhel/7/x86_64/stable
+    gpgcheck: 0
+    enabled: 1
+
+- name: Install InfluxDB package
+  yum:
+    name: influxdb
+    state: present
+  become: yes
+
+- name: Start and enable InfluxDB service
+  systemd:
+    name: influxdb
+    enabled: yes
+    state: started
+
+- name: Start and enable MariaDB service
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
